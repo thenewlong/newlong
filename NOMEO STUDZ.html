@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOMEO STUDZ | Educational App</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+
+    <style>
+        body { 
+            font-family: 'Roboto', sans-serif; 
+            background-color: #f1f3f6; /* Flipkart/Meesho gray bg */
+            user-select: none; 
+            -webkit-tap-highlight-color: transparent; 
+            overflow: hidden;
+        }
+
+        /* Hide Scrollbar but allow scrolling */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Smooth Slider Transitions */
+        .slider-track { transition: transform 0.5s cubic-bezier(0.25, 1, 0.5, 1); }
+
+        /* Interactions */
+        .tap-effect:active { transform: scale(0.97); opacity: 0.8; }
+
+        /* Auth Inputs */
+        .auth-input { 
+            width: 100%; 
+            background: #fff; 
+            border: 1px solid #e0e0e0; 
+            border-radius: 4px; 
+            padding: 10px 12px; 
+            font-size: 14px; 
+            outline: none; 
+            transition: border 0.3s;
+        }
+        .auth-input:focus { border-color: #2874f0; } /* Flipkart Blue */
+
+        /* Cinematic Splash Screen Animations */
+        @keyframes fade-in-up {
+            0% { opacity: 0; transform: translateY(20px); }
+            100% { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fade-out {
+            0% { opacity: 1; }
+            100% { opacity: 0; visibility: hidden; }
+        }
+        .splash-fade-in {
+            animation: fade-in-up 1s ease-out forwards;
+        }
+        .splash-fade-out {
+            animation: fade-out 0.5s ease-in 2s forwards;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col relative overflow-hidden text-gray-800">
+
+    <!-- ===================== 0. CINEMATIC WELCOME SCREEN ===================== -->
+    <div id="welcomeScreen" class="fixed inset-0 z-[100] bg-gradient-to-br from-[#2874f0] to-[#1a5bbd] flex flex-col items-center justify-center transition duration-500">
+        <div id="nomeoText" class="text-white text-5xl font-black italic tracking-tighter opacity-0" style="animation-delay: 0.1s;">
+            NOMEO <span class="text-yellow-400">STUDZ</span>
+        </div>
+        <div id="poweredBy" class="text-blue-200 text-sm mt-4 tracking-wider opacity-0" style="animation-delay: 1.5s;">
+            Powered by Newlong
+        </div>
+    </div>
+    
+    <!-- ===================== 1. AUTH SCREEN (SIGN IN / UP) ===================== -->
+    <div id="authScreen" class="absolute inset-0 z-50 bg-white flex flex-col overflow-y-auto hidden">
+        <div class="bg-[#2874f0] p-8 pb-12 rounded-b-[50px] shadow-lg text-center">
+            <h1 class="text-4xl font-black text-white italic tracking-tighter">NOMEO <span class="text-yellow-400">STUDZ</span></h1>
+            <p class="text-blue-100 text-sm mt-2">Your Permanent Digital Classroom</p>
+        </div>
+
+        <div class="px-6 -mt-8">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-xl font-bold text-gray-700 mb-4 text-center">Student Registration</h2>
+                
+                <form id="authForm" class="space-y-4">
+                    <!-- Name -->
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase">Full Name</label>
+                        <input type="text" id="sName" required class="auth-input" placeholder="Enter Name">
+                    </div>
+
+                    <!-- Class Logic -->
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase">Class / Level</label>
+                        <select id="sClass" onchange="handleClassChange()" class="auth-input bg-white">
+                            <option value="" disabled selected>Select Class</option>
+                            <optgroup label="Middle School">
+                                <option value="6">Class 6</option>
+                                <option value="7">Class 7</option>
+                                <option value="8">Class 8</option>
+                            </optgroup>
+                            <optgroup label="High School">
+                                <option value="9">Class 9</option>
+                                <option value="10">Class 10</option>
+                                <option value="11">Class 11</option>
+                                <option value="12">Class 12</option>
+                            </optgroup>
+                            <optgroup label="Higher Ed">
+                                <option value="Diploma">Diploma (Polytechnic)</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <!-- Hidden: Stream (9-12) -->
+                    <div id="streamDiv" class="hidden">
+                        <label class="text-xs font-bold text-blue-600 uppercase">Select Stream</label>
+                        <select id="sStream" class="auth-input border-blue-200 bg-blue-50 text-blue-800">
+                            <option value="PCM">Science (PCM)</option>
+                            <option value="PCB">Science (PCB)</option>
+                            <option value="Arts">Arts / Humanities</option>
+                            <option value="Commerce">Commerce</option>
+                        </select>
+                    </div>
+
+                    <!-- Hidden: Department (Diploma) -->
+                    <div id="deptDiv" class="hidden">
+                        <label class="text-xs font-bold text-purple-600 uppercase">Select Department</label>
+                        <select id="sDept" class="auth-input border-purple-200 bg-purple-50 text-purple-800">
+                            <option value="All">All Departments</option>
+                            <option value="Mechanical">Mechanical</option>
+                            <option value="Civil">Civil</option>
+                            <option value="CS">Computer Science</option>
+                            <option value="Electrical">Electrical</option>
+                            <option value="Electronics">Electronics</option>
+                        </select>
+                    </div>
+
+                    <!-- Contact Details -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase">Board</label>
+                            <input type="text" id="sBoard" class="auth-input" placeholder="CBSE/State">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 uppercase">Phone</label>
+                            <input type="tel" id="sPhone" class="auth-input" placeholder="Mobile No.">
+                        </div>
+                    </div>
+                     <div>
+                        <label class="text-xs font-bold text-gray-500 uppercase">Email</label>
+                        <input type="email" id="sEmail" class="auth-input" placeholder="student@email.com">
+                    </div>
+
+                    <button type="submit" class="w-full bg-[#fb641b] text-white font-bold py-3.5 rounded shadow-md mt-2 active:bg-orange-600 transition">
+                        Sign In Permanently
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===================== 2. MAIN APP DASHBOARD ===================== -->
+    <div id="mainApp" class="hidden flex-1 flex flex-col bg-[#f1f3f6] h-full">
+        
+        <!-- Header (Flipkart Style) -->
+        <header class="bg-[#2874f0] text-white shadow z-30 sticky top-0">
+            <div class="px-3 py-2 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <button><i class="fas fa-bars"></i></button>
+                    <div>
+                        <h1 class="font-bold italic text-lg leading-none tracking-tight">NOMEO <span class="text-yellow-400 text-xs font-normal">Studz</span></h1>
+                    </div>
+                </div>
+                <div class="flex gap-4 items-center">
+                    <button class="relative">
+                        <i class="fas fa-bell"></i>
+                        <span class="absolute -top-1 -right-1 bg-red-500 w-2 h-2 rounded-full border border-white"></span>
+                    </button>
+                    <button onclick="logout()" class="text-xs font-bold bg-white text-[#2874f0] px-3 py-1 rounded-sm shadow-sm">
+                        Sign Out
+                    </button>
+                </div>
+            </div>
+            <!-- Search Bar -->
+            <div class="px-3 pb-2">
+                <div class="bg-white rounded-sm flex items-center px-3 py-2 shadow-sm">
+                    <i class="fas fa-search text-gray-400 text-sm mr-2"></i>
+                    <input type="text" placeholder="Search for notes, questions, exams..." class="w-full outline-none text-sm text-gray-700">
+                </div>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <main id="contentArea" class="flex-1 overflow-y-auto pb-20 no-scrollbar">
+            <!-- Dynamic Content Injected Here -->
+        </main>
+
+        <!-- Bottom Nav -->
+        <nav class="bg-white fixed bottom-0 w-full border-t border-gray-200 flex justify-between px-6 py-2 text-[10px] font-medium text-gray-500 z-40 shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+            <button onclick="renderDashboard()" class="nav-btn text-[#2874f0] flex flex-col items-center gap-1" id="btn-home">
+                <i class="fas fa-home text-lg"></i> Home
+            </button>
+            <button onclick="renderNotes()" class="nav-btn flex flex-col items-center gap-1" id="btn-notes">
+                <i class="fas fa-book-reader text-lg"></i> Notes
+            </button>
+            <button onclick="renderQuestions()" class="nav-btn flex flex-col items-center gap-1" id="btn-qbank">
+                <i class="fas fa-layer-group text-lg"></i> Q-Bank
+            </button>
+            <button onclick="renderExam()" class="nav-btn flex flex-col items-center gap-1" id="btn-exam">
+                <i class="fas fa-file-signature text-lg"></i> Exam
+            </button>
+            <button onclick="renderProfile()" class="nav-btn flex flex-col items-center gap-1" id="btn-profile">
+                <i class="fas fa-user-circle text-lg"></i> Account
+            </button>
+        </nav>
+    </div>
+
+    <!-- ===================== JAVASCRIPT LOGIC ===================== -->
+    <script>
+        // --- 1. DATA & CONFIGURATION ---
+        let user = JSON.parse(localStorage.getItem('nomeoUser')) || null;
+        let sliderInterval;
+        
+        // ** IMPORTANT: REPLACE 'YOUR_ACTUAL_PDF_LINK_HERE' with your real PDF URLs **
+        const PDF_PLACEHOLDER = 'YOUR_ACTUAL_PDF_LINK_HERE';
+
+        // Subject Mapping
+        const subjectMap = {
+            "6-8": ["Mathematics", "English", "Hindi", "Science", "Social Science"],
+            "PCM": ["Physics", "Chemistry", "Mathematics", "English", "Computer Science"],
+            "PCB": ["Physics", "Chemistry", "Biology", "English", "Physical Edu"],
+            "Arts": ["History", "Geography", "Political Science", "English", "Economics"],
+            "Commerce": ["Accountancy", "Business Studies", "Economics", "English", "Mathematics"],
+            "Diploma": ["Applied Physics", "Applied Maths", "DLD & Microproccesor ", "Workshop Tech", "Core Dept Subject"]
+        };
+        
+        // Mock PDF data (Replace links with your actual file URLs)
+        const mockPdfs = {
+            "Mathematics": [
+                { name: "Algebra Basics Notes", link:"C:\Users\ISMIKA\Downloads\YUVAI GYC PROJECT.pdf", size: "1.2 MB" }, 
+                { name: "Geometry Theorems PDF", link: PDF_PLACEHOLDER, size: "1.8 MB" }
+            ],
+            "Physics": [
+                { name: "Mechanics Notes", link: "https://drive.google.com/file/d/1B2tSkIwV-IF36l-F6oFAIGYGLlyFP0tW/view?usp=drive_link", size: "3.5 MB" }, 
+                { name: "Optics Summary", link: PDF_PLACEHOLDER, size: "1.1 MB" }
+            ],
+            "English": [
+                { name: "Grammar Rules", link: "C:\Users\ISMIKA\Downloads\YUVAI GYC PROJECT.pdf", size: "0.9 MB" }
+            ],
+            "History": [
+                { name: "Ancient Civilizations", link: PDF_PLACEHOLDER, size: "2.1 MB" }
+            ],
+            // Add more subjects and PDF links as needed
+        };
+
+
+        // --- 2. INITIALIZATION & WELCOME SEQUENCE ---
+        document.addEventListener('DOMContentLoaded', () => {
+            const nomeoText = document.getElementById('nomeoText');
+            const poweredBy = document.getElementById('poweredBy');
+            const welcomeScreen = document.getElementById('welcomeScreen');
+
+            // 1. Start cinematic animation
+            nomeoText.classList.add('splash-fade-in');
+            poweredBy.classList.add('splash-fade-in');
+
+            // 2. Wait for animation and check auth
+            setTimeout(() => {
+                welcomeScreen.classList.add('splash-fade-out');
+                // Wait for the fade-out to finish before showing the app
+                setTimeout(() => {
+                     if (user) { initApp(); } 
+                     else { document.getElementById('authScreen').classList.remove('hidden'); }
+                }, 500); 
+
+            }, 2500); // Total animation time before fade-out starts (1.5s delay + 1s animation)
+        });
+
+        // --- 3. AUTHENTICATION LOGIC ---
+        function handleClassChange() {
+            const cls = document.getElementById('sClass').value;
+            const streamDiv = document.getElementById('streamDiv');
+            const deptDiv = document.getElementById('deptDiv');
+            
+            streamDiv.classList.add('hidden');
+            deptDiv.classList.add('hidden');
+
+            if (["9", "10", "11", "12"].includes(cls)) {
+                streamDiv.classList.remove('hidden');
+            } else if (cls === "Diploma") {
+                deptDiv.classList.remove('hidden');
+            }
+        }
+
+        document.getElementById('authForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const cls = document.getElementById('sClass').value;
+            let category = "6-8";
+
+            if(["9", "10", "11", "12"].includes(cls)) {
+                category = document.getElementById('sStream').value;
+            } else if (cls === "Diploma") {
+                category = "Diploma";
+            }
+
+            user = {
+                name: document.getElementById('sName').value,
+                class: cls,
+                category: category,
+                dept: cls === "Diploma" ? document.getElementById('sDept').value : null,
+                board: document.getElementById('sBoard').value,
+                phone: document.getElementById('sPhone').value,
+                email: document.getElementById('sEmail').value
+            };
+
+            localStorage.setItem('nomeoUser', JSON.stringify(user)); // Permanent Sign In
+            document.getElementById('authScreen').classList.add('hidden');
+            initApp();
+        });
+
+        function logout() {
+            // NOTE: Using window.confirm/alert for simplicity here, but a custom modal is preferred in production.
+            if(confirm("Are you sure you want to Sign Out?")) {
+                localStorage.removeItem('nomeoUser');
+                location.reload();
+            }
+        }
+
+        function initApp() {
+            document.getElementById('mainApp').classList.remove('hidden');
+            renderDashboard();
+        }
+
+        // --- 4. RENDERING FUNCTIONS ---
+        function setActive(id) {
+            document.querySelectorAll('.nav-btn').forEach(b => b.classList.replace('text-[#2874f0]', 'text-gray-500'));
+            const btn = document.getElementById(id);
+            if(btn) btn.classList.replace('text-gray-500', 'text-[#2874f0]');
+        }
+        function clearSlider() { if(sliderInterval) clearInterval(sliderInterval); }
+
+        // --- DASHBOARD (FLIPKART/MEESHO STYLE) ---
+        function renderDashboard() {
+            clearSlider();
+            setActive('btn-home');
+            const content = document.getElementById('contentArea');
+
+            // 1. Hero Auto Slider
+            const banners = [
+                { color: "bg-blue-600", t: "Monthly Exams", d: "Live Now - Check Rank" },
+                { color: "bg-[#fb641b]", t: "New Notes Added", d: `For Class ${user.class} (${user.category})` },
+                { color: "bg-teal-600", t: "Scholarship 2024", d: "Apply Before 30th" },
+                { color: "bg-purple-600", t: "Video Lectures", d: "Premium Quality" }
+            ];
+
+            const sliderHtml = banners.map(b => `
+                <div class="min-w-full h-40 ${b.color} text-white flex flex-col justify-center px-6 relative">
+                    <h2 class="text-2xl font-bold">${b.t}</h2>
+                    <p class="text-sm opacity-90 mt-1">${b.d}</p>
+                    <button class="mt-3 bg-white text-gray-800 text-xs font-bold px-3 py-1.5 rounded w-max shadow tap-effect">Explore</button>
+                    <i class="fas fa-shapes absolute right-4 bottom-4 text-7xl opacity-20"></i>
+                </div>
+            `).join('');
+
+            // 2. Circle Icons (Meesho Style)
+            const circles = [
+                { n: "Notes", i: "fa-book", f: "renderNotes()", c: "text-blue-600" },
+                { n: "Q-Bank", i: "fa-question", f: "renderQuestions()", c: "text-purple-600" },
+                { n: "Exams", i: "fa-pen", f: "renderExam()", c: "text-orange-500" },
+                { n: "Results", i: "fa-poll", f: "alert('Results Coming Soon')", c: "text-green-600" },
+                { n: "Videos", i: "fa-play", f: "alert('Video Library')", c: "text-red-500" },
+                { n: "Profile", i: "fa-user", f: "renderProfile()", c: "text-gray-600" }
+            ];
+
+            // 3. Sliding "Upcoming" Cards (Now 9 Events!)
+            const upcoming = [
+                { t: "Maths Test", d: "Tomorrow 10 AM", tag: "Exam", color: "border-blue-500" },
+                { t: "Physics Lab", d: "Monday 9 AM", tag: "Class", color: "border-green-500" },
+                { t: "History Quiz", d: "Friday 5 PM", tag: "Quiz", color: "border-orange-500" },
+                { t: "English Viva", d: "Next Week", tag: "Oral", color: "border-red-500" },
+                { t: "Chemistry Doubt Session", d: "Today 7 PM", tag: "Doubt", color: "border-purple-500" },
+                { t: "Biology Chapter 3 Revision", d: "Tuesday Morning", tag: "Revision", color: "border-teal-500" },
+                { t: "New Product Launch Webinar", d: "Sat 4 PM", tag: "Webinar", color: "border-yellow-500" },
+                { t: "Economics Assignment Due", d: "Sunday Midnight", tag: "Deadline", color: "border-pink-500" },
+                { t: "Career Counseling Talk", d: "Next Month", tag: "Counseling", color: "border-indigo-500" }
+            ];
+
+            content.innerHTML = `
+                <!-- Auto Slider -->
+                <div class="w-full overflow-hidden relative shadow-sm">
+                    <div id="sliderTrack" class="flex slider-track">${sliderHtml}</div>
+                    <div class="absolute bottom-2 left-1/2 transform -translate-x-1/2 flex gap-1">
+                        ${banners.map(() => `<div class="w-1.5 h-1.5 bg-white opacity-60 rounded-full"></div>`).join('')}
+                    </div>
+                </div>
+
+                <!-- Categories (Circles) -->
+                <div class="bg-white p-3 shadow-sm mb-2">
+                    <div class="flex gap-4 overflow-x-auto no-scrollbar pb-1">
+                        ${circles.map(c => `
+                            <div onclick="${c.f}" class="flex flex-col items-center gap-1 min-w-[60px] cursor-pointer tap-effect">
+                                <div class="w-12 h-12 rounded-full bg-gray-50 border border-gray-100 flex items-center justify-center text-xl ${c.c}">
+                                    <i class="fas ${c.i}"></i>
+                                </div>
+                                <span class="text-[10px] font-medium text-gray-600">${c.n}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- Upcoming Events (Horizontal Scroll) -->
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-3 mb-2 shadow-sm">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="font-bold text-gray-700 text-xs uppercase">Upcoming Events (9 Items)</h3>
+                        <span class="text-[10px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded">View All</span>
+                    </div>
+                    <div class="flex gap-3 overflow-x-auto no-scrollbar">
+                        ${upcoming.map(u => `
+                            <div class="min-w-[130px] bg-white p-3 rounded shadow-sm border-l-4 ${u.color} flex flex-col justify-between h-24 tap-effect">
+                                <div>
+                                    <span class="text-[9px] font-bold text-gray-400 uppercase">${u.tag}</span>
+                                    <h4 class="font-bold text-sm text-gray-800 leading-tight mt-1">${u.t}</h4>
+                                </div>
+                                <p class="text-[10px] text-gray-500"><i class="far fa-clock"></i> ${u.d}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <!-- Features Grid -->
+                <div class="bg-white p-3 shadow-sm">
+                    <h3 class="font-bold text-gray-700 text-sm mb-3">Featured for Class ${user.class}</h3>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div class="border border-gray-200 rounded p-2 flex gap-2 items-center tap-effect">
+                            <div class="w-10 h-10 bg-red-50 text-red-500 rounded flex items-center justify-center"><i class="fas fa-file-pdf"></i></div>
+                            <div class="overflow-hidden">
+                                <p class="text-xs font-bold truncate">Formula Sheet</p>
+                                <p class="text-[10px] text-green-600">Free Download</p>
+                            </div>
+                        </div>
+                         <div class="border border-gray-200 rounded p-2 flex gap-2 items-center tap-effect">
+                            <div class="w-10 h-10 bg-green-50 text-green-500 rounded flex items-center justify-center"><i class="fas fa-check-circle"></i></div>
+                            <div class="overflow-hidden">
+                                <p class="text-xs font-bold truncate">Solved Papers</p>
+                                <p class="text-[10px] text-green-600">Last 5 Years</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Slider Logic
+            let idx = 0;
+            const track = document.getElementById('sliderTrack');
+            sliderInterval = setInterval(() => {
+                idx = (idx + 1) % 4;
+                if(track) track.style.transform = `translateX(-${idx * 100}%)`;
+            }, 3000);
+        }
+
+        // --- NOTES SECTION (PDF DOWNLOAD CODE) ---
+        function renderNotes() {
+            clearSlider();
+            setActive('btn-notes');
+            const subjects = getSubjects();
+            
+            let html = `
+                <div class="bg-white sticky top-0 z-10 p-3 shadow-sm">
+                    <h2 class="text-lg font-bold text-gray-800">Study Notes</h2>
+                    <p class="text-xs text-gray-500">Filtered for: ${user.class} (${user.category})</p>
+                </div>
+                <div class="p-3 space-y-3">
+            `;
+
+            subjects.forEach(sub => {
+                // Get PDFs for the current subject, default to one placeholder if none defined
+                const pdfs = mockPdfs[sub] || [{ name: "Syllabus Overview", link: "C:\Users\ISMIKA\Downloads\YUVAI GYC PROJECT.pdf", size: "1.0 MB" }];
+                
+                html += `
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                        <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center tap-effect">
+                            <h3 class="font-bold text-sm text-gray-700">${sub}</h3>
+                            <span class="text-xs text-gray-500">${pdfs.length} files</span>
+                        </div>
+                        <div class="p-3 space-y-3">
+                            ${pdfs.map(pdf => `
+                                <div class="flex justify-between items-center">
+                                    <div class="flex items-center gap-3">
+                                        <i class="fas fa-file-pdf text-red-500 text-xl"></i>
+                                        <div>
+                                            <p class="text-xs font-bold text-gray-800">${pdf.name}</p>
+                                            <p class="text-[10px] text-gray-400">${pdf.size} • PDF</p>
+                                        </div>
+                                    </div>
+                                    <!-- HTML <a> tag with download attribute for direct PDF download -->
+                                    <a href="${pdf.link === PDF_PLACEHOLDER ? 'C:\Users\ISMIKA\Downloads\YUVAI GYC PROJECT.pdf' : pdf.link}" 
+                                       download="${pdf.name.replace(/\s/g, '_')}_${sub}.pdf"
+                                       class="bg-blue-50 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center hover:bg-blue-100 transition tap-effect"
+                                       target="_blank" rel="noopener noreferrer"
+                                       onclick="${pdf.link === PDF_PLACEHOLDER ? 'alert(\'Please link your actual PDF file in the mockPdfs data object.\'); return false;' : ''}">
+                                        <i class="fas fa-download text-xs"></i>
+                                    </a>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+            document.getElementById('contentArea').innerHTML = html;
+        }
+
+        // --- QUESTION BANK ---
+        function renderQuestions() {
+            clearSlider();
+            setActive('btn-qbank');
+            const subjects = getSubjects();
+            
+            let html = `
+                <div class="bg-[#2874f0] text-white p-4 shadow mb-2">
+                    <h2 class="font-bold text-lg">Question Bank</h2>
+                    <p class="text-xs opacity-80">Previous Year & Model Papers for All Subjects</p>
+                </div>
+                <div class="p-3 grid gap-3">
+            `;
+
+            subjects.forEach(sub => {
+                html += `
+                    <div class="bg-white p-3 rounded shadow-sm border border-gray-100 flex items-center justify-between tap-effect">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded flex items-center justify-center font-bold text-lg">Q</div>
+                            <div>
+                                <h4 class="text-sm font-bold text-gray-800">${sub}</h4>
+                                <p class="text-[10px] text-gray-500">5+ sets available</p>
+                            </div>
+                        </div>
+                        <!-- HTML <a> tag for Question Bank download -->
+                        <a href="${"https://drive.google.com/file/d/1v4pmrh5STyQ9POhF6YW3RplzJG6ajkcO/view?usp=drive_link"}" 
+                           download="${sub}_QuestionBank.pdf"
+                           class="text-xs border border-indigo-200 text-indigo-600 px-3 py-1 rounded font-medium tap-effect"
+                           target="_blank" rel="noopener noreferrer"
+                           onclick="alert('Please link your actual PDF file in the PDF_PLACEHOLDER constant.'); return false;">
+                           Download
+                       </a>
+                    </div>
+                `;
+            });
+            html += `</div>`;
+            document.getElementById('contentArea').innerHTML = html;
+        }
+
+        // --- EXAM SECTION ---
+        function renderExam() {
+            clearSlider();
+            setActive('btn-exam');
+            document.getElementById('contentArea').innerHTML = `
+                <div class="p-4">
+                    <h2 class="text-xl font-bold text-gray-800 mb-4">Examination Hall</h2>
+                    
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-0.5 rounded">LIVE</span>
+                            <span class="text-xs text-gray-500 font-mono">Time: 3 Hrs</span>
+                        </div>
+                        <h3 class="text-lg font-bold text-gray-800">Monthly Assessment</h3>
+                        <p class="text-xs text-gray-500 mb-4">Full syllabus test for Class ${user.class}</p>
+
+                        <!-- Step 1: Download QP using <a> tag -->
+                        <a href="${"https://drive.google.com/file/d/1v4pmrh5STyQ9POhF6YW3RplzJG6ajkcO/view?usp=drive_link"}" download="QuestionPaper_${user.class}.pdf" target="_blank" rel="noopener noreferrer"
+                           class="w-full flex items-center justify-center gap-2 border border-blue-600 text-blue-600 py-2.5 rounded-md text-sm font-bold hover:bg-blue-50 mb-4 transition tap-effect"
+                           onclick="alert("https://drive.google.com/file/d/1v4pmrh5STyQ9POhF6YW3RplzJG6ajkcO/view?usp=drive_link"); return false;">
+                            <i class="fas fa-file-download"></i> Download Question Paper
+                        </a>
+
+                        <div class="border-t border-gray-100 pt-4">
+                            <p class="text-xs font-bold text-gray-600 mb-2 uppercase">Upload Answer Sheet (PDF)</p>
+                            <label class="flex flex-col items-center justify-center w-full h-24 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition">
+                                <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                                    <i class="fas fa-cloud-upload-alt text-2xl text-gray-400 mb-1"></i>
+                                    <p class="text-xs text-gray-500">Click to upload answer PDF</p>
+                                </div>
+                                <input type="file" class="hidden" onchange="console.log('File Selected!');" />
+                            </label>
+                            <button onclick="alert('Exam Submitted Successfully!')" class="w-full mt-3 bg-[#fb641b] text-white py-3 rounded-md font-bold shadow hover:bg-orange-600 transition tap-effect">
+                                Submit Exam
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- PROFILE ---
+        function renderProfile() {
+            clearSlider();
+            setActive('btn-profile');
+            document.getElementById('contentArea').innerHTML = `
+                <div class="bg-white m-3 p-4 rounded shadow-sm flex items-center gap-4 border border-gray-100">
+                    <div class="w-16 h-16 bg-gradient-to-tr from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-2xl font-bold text-white shadow">
+                        ${user.name.charAt(0)}
+                    </div>
+                    <div>
+                        <h2 class="font-bold text-lg text-gray-800">${user.name}</h2>
+                        <p class="text-xs text-gray-500">Class ${user.class} • ${user.category}</p>
+                    </div>
+                </div>
+
+                <div class="bg-white mx-3 rounded shadow-sm text-sm text-gray-700 divide-y divide-gray-100 border border-gray-100">
+                    <div class="p-3 flex justify-between">
+                        <span class="text-gray-500">Department/Stream</span> 
+                        <span class="font-bold">${user.category}</span>
+                    </div>
+                    <div class="p-3 flex justify-between">
+                        <span class="text-gray-500">Board</span> 
+                        <span class="font-bold">${user.board}</span>
+                    </div>
+                    <div class="p-3 flex justify-between">
+                        <span class="text-gray-500">Email</span> 
+                        <span class="font-bold">${user.email || 'N/A'}</span>
+                    </div>
+                     <div class="p-3 flex justify-between">
+                        <span class="text-gray-500">Phone</span> 
+                        <span class="font-bold">${user.phone || 'N/A'}</span>
+                    </div>
+                </div>
+
+                <div class="p-6">
+                    <button onclick="logout()" class="w-full border border-red-500 text-red-500 py-3 rounded font-bold hover:bg-red-50 transition tap-effect">
+                        Sign Out Permanently
+                    </button>
+                </div>
+            `;
+        }
+
+        // --- UTILS: GET SUBJECTS BASED ON USER ---
+        function getSubjects() {
+            if(["6", "7", "8"].includes(user.class)) return subjectMap["6-8"];
+            if(user.category === "Diploma") return subjectMap["Diploma"];
+            return subjectMap[user.category] || subjectMap["6-8"];
+        }
+    </script>
+</body>
+</html>
